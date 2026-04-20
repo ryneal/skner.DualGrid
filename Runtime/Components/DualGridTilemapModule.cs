@@ -59,6 +59,7 @@ namespace skner.DualGrid
             if (_renderTilemap == null) _renderTilemap = transform.GetComponentInImmediateChildren<Tilemap>();
         }
 
+#if UNITY_EDITOR || UNITY_2022_1_OR_NEWER
         private void OnEnable()
         {
             Tilemap.tilemapTileChanged += HandleTilemapChange;
@@ -88,6 +89,35 @@ namespace skner.DualGrid
                 {
                     RefreshRenderTiles(tileChange.position);
                 }
+            }
+        }
+
+#endif
+        public void SetDataTile(Vector3Int position)
+        {
+            DataTilemap.SetTile(position, DataTile);
+            RefreshRenderTiles(position);
+        }
+
+        public void SetDataTiles(BoundsInt bounds)
+        {
+            foreach (var position in bounds.allPositionsWithin)
+            {
+                SetDataTile(position);
+            }
+        }
+
+        public void ClearDataTile(Vector3Int position)
+        {
+            DataTilemap.SetTile(position, null);
+            RefreshRenderTiles(position);
+        }
+
+        public void ClearDataTiles(BoundsInt bounds)
+        {
+            foreach (var position in bounds.allPositionsWithin)
+            {
+                ClearDataTile(position);
             }
         }
 
