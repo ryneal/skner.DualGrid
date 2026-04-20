@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.0] - 2026-04-20
+
+- Fixed issue [#8](https://github.com/skner-dev/skner.DualGrid/issues/8): Build error in Unity 2021
+- Added new SetTile and ClearTile methods in the DualGridTilemapModule
+
 ## [2.0.4] - 2025-10-02
 
 - Optimized RenderTilemap refresh callbacks 
