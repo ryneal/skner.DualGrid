@@ -38,5 +38,91 @@ namespace skner.DualGrid.Utils
             if (c) mask |= 1 << 2;
             return mask;
         }
+
+        // ---------------------------------------------------------------------
+        // Geometry derivation (pointy-top)
+        //
+        // We work internally in axial coordinates because hex vertex math is
+        // parity-free there. We convert to and from Unity's offset coordinates
+        // (odd-r for pointy-top, odd-q for flat-top) at the API boundary.
+        //
+        // Axial convention for pointy-top: +q = east, +r = north.
+        // Hex (q, r) has 6 vertices: N, NE, SE, S, SW, NW.
+        // Each vertex is shared by 3 hexes; the 3 form either an up-pointing
+        // triangle (apex north) or a down-pointing triangle (apex south).
+        //
+        // Up triangles (centroids) at vertices: NE, S, NW.
+        // Down triangles (centroids) at vertices: N, SE, SW.
+        //
+        // We define render cell coordinates so that:
+        //   UpRender(q, r)   = the up triangle with data neighbors
+        //                      (q, r), (q, r+1), (q+1, r)
+        //                      -- this is the NE vertex of data (q, r).
+        //   DownRender(q, r) = the down triangle with data neighbors
+        //                      (q, r), (q+1, r), (q+1, r-1)
+        //                      -- this is the SE vertex of data (q, r).
+        //
+        // Under this convention, a data cell (a, b) contributes to:
+        //   UP   render cells: (a, b), (a, b-1), (a-1, b)
+        //   DOWN render cells: (a, b), (a-1, b+1), (a-1, b)
+        // (derived by listing each of its 3 up- and 3 down-vertices and
+        // re-indexing each as the NE/SE vertex of one of the 3 sharing hexes).
+        //
+        // The canonical neighbor ordering returned by
+        // GetDataNeighborsForRenderCell is lowest-y, then clockwise:
+        //   Up   (q, r): [(q, r), (q, r+1), (q+1, r)]   -- BL, Apex, BR
+        //   Down (q, r): [(q+1, r-1), (q, r), (q+1, r)] -- Apex, TL, TR
+        // ---------------------------------------------------------------------
+
+        internal static Vector3Int OffsetToAxialPointy(Vector3Int offset)
+        {
+            int q = offset.x - ((offset.y - (offset.y & 1)) / 2);
+            return new Vector3Int(q, offset.y, 0);
+        }
+
+        internal static Vector3Int AxialToOffsetPointy(Vector3Int axial)
+        {
+            int x = axial.x + ((axial.y - (axial.y & 1)) / 2);
+            return new Vector3Int(x, axial.y, 0);
+        }
+
+        public static RenderCellSet GetRenderCellsForDataCell(Vector3Int dataCell, HexOrientation orientation)
+        {
+            if (orientation == HexOrientation.PointyTop)
+                return GetRenderCellsForDataCell_PointyTop(dataCell);
+            return GetRenderCellsForDataCell_FlatTop(dataCell);
+        }
+
+        private static RenderCellSet GetRenderCellsForDataCell_PointyTop(Vector3Int dataCell)
+        {
+            Vector3Int a = OffsetToAxialPointy(dataCell);
+
+            Vector3Int[] upAxial =
+            {
+                new Vector3Int(a.x,     a.y,     0),
+                new Vector3Int(a.x,     a.y - 1, 0),
+                new Vector3Int(a.x - 1, a.y,     0),
+            };
+            Vector3Int[] downAxial =
+            {
+                new Vector3Int(a.x,     a.y,     0),
+                new Vector3Int(a.x - 1, a.y + 1, 0),
+                new Vector3Int(a.x - 1, a.y,     0),
+            };
+
+            var up = new Vector3Int[3];
+            var down = new Vector3Int[3];
+            for (int i = 0; i < 3; i++)
+            {
+                up[i] = AxialToOffsetPointy(upAxial[i]);
+                down[i] = AxialToOffsetPointy(downAxial[i]);
+            }
+            return new RenderCellSet(up, down);
+        }
+
+        private static RenderCellSet GetRenderCellsForDataCell_FlatTop(Vector3Int dataCell)
+        {
+            throw new System.NotImplementedException("Flat-top mapping is added in a later task.");
+        }
     }
 }
