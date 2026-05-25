@@ -1,0 +1,262 @@
+using System.Collections.Generic;
+using NUnit.Framework;
+using UnityEngine;
+using skner.DualGrid.Utils;
+
+namespace skner.DualGrid.Tests
+{
+    public class HexDualGridUtilsTests
+    {
+        [Test]
+        public void EncodeNeighborMask_AllFalse_Returns0()
+        {
+            Assert.AreEqual(0, HexDualGridUtils.EncodeNeighborMask(false, false, false));
+        }
+
+        [Test]
+        public void EncodeNeighborMask_AllTrue_Returns7()
+        {
+            Assert.AreEqual(7, HexDualGridUtils.EncodeNeighborMask(true, true, true));
+        }
+
+        [Test]
+        public void EncodeNeighborMask_OnlyFirst_Returns1()
+        {
+            Assert.AreEqual(1, HexDualGridUtils.EncodeNeighborMask(true, false, false));
+        }
+
+        [Test]
+        public void EncodeNeighborMask_OnlySecond_Returns2()
+        {
+            Assert.AreEqual(2, HexDualGridUtils.EncodeNeighborMask(false, true, false));
+        }
+
+        [Test]
+        public void EncodeNeighborMask_OnlyThird_Returns4()
+        {
+            Assert.AreEqual(4, HexDualGridUtils.EncodeNeighborMask(false, false, true));
+        }
+
+        // ----- Pointy-top render cell mapping ---------------------------------
+
+        // Fixtures derived from the geometric analysis documented in
+        // HexDualGridUtils.cs. (0, 0) is an even-row cell; (1, 1) is an
+        // odd-row cell — together they exercise the odd-r offset toggle.
+
+        [Test]
+        public void GetRenderCellsForDataCell_PointyTop_EvenRow()
+        {
+            var result = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 0, 0), HexOrientation.PointyTop);
+
+            Assert.AreEqual(3, result.UpCells.Length);
+            Assert.AreEqual(3, result.DownCells.Length);
+
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(-1, -1, 0),
+                    new Vector3Int(-1, 0, 0),
+                },
+                result.UpCells);
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(-1, 1, 0),
+                    new Vector3Int(-1, 0, 0),
+                },
+                result.DownCells);
+        }
+
+        [Test]
+        public void GetRenderCellsForDataCell_PointyTop_OddRow()
+        {
+            var result = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(1, 1, 0), HexOrientation.PointyTop);
+
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(1, 1, 0),
+                    new Vector3Int(1, 0, 0),
+                    new Vector3Int(0, 1, 0),
+                },
+                result.UpCells);
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(1, 1, 0),
+                    new Vector3Int(1, 2, 0),
+                    new Vector3Int(0, 1, 0),
+                },
+                result.DownCells);
+        }
+
+        [Test]
+        public void GetRenderCellsForDataCell_PointyTop_AdjacentDataCells_ShareTwoRenderCells()
+        {
+            // (0,0) and (1,0) are east neighbors on an even row. As hex
+            // neighbors they share 2 vertices (the 2 endpoints of the shared
+            // edge), one of which is an up-triangle centroid and the other a
+            // down-triangle centroid -- so the intersection across both
+            // render tilemaps has cardinality 2.
+            var a = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 0, 0), HexOrientation.PointyTop);
+            var b = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(1, 0, 0), HexOrientation.PointyTop);
+
+            int sharedUp = SharedCount(a.UpCells, b.UpCells);
+            int sharedDown = SharedCount(a.DownCells, b.DownCells);
+
+            Assert.AreEqual(2, sharedUp + sharedDown,
+                "adjacent hexes share exactly 2 render-cell vertices in total across both tilemaps");
+        }
+
+        private static int SharedCount(Vector3Int[] left, Vector3Int[] right)
+        {
+            var set = new HashSet<Vector3Int>(left);
+            int shared = 0;
+            foreach (var c in right) if (set.Contains(c)) shared++;
+            return shared;
+        }
+
+        // ----- Flat-top render cell mapping -----------------------------------
+
+        [Test]
+        public void GetRenderCellsForDataCell_FlatTop_EvenColumn()
+        {
+            var result = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 0, 0), HexOrientation.FlatTop);
+
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(0, 1, 0),
+                    new Vector3Int(-1, 0, 0),
+                },
+                result.UpCells);
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(1, 0, 0),
+                    new Vector3Int(0, 1, 0),
+                },
+                result.DownCells);
+        }
+
+        [Test]
+        public void GetRenderCellsForDataCell_FlatTop_OddColumn()
+        {
+            var result = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(1, 1, 0), HexOrientation.FlatTop);
+
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(1, 1, 0),
+                    new Vector3Int(1, 2, 0),
+                    new Vector3Int(0, 2, 0),
+                },
+                result.UpCells);
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(1, 1, 0),
+                    new Vector3Int(2, 2, 0),
+                    new Vector3Int(1, 2, 0),
+                },
+                result.DownCells);
+        }
+
+        [Test]
+        public void GetRenderCellsForDataCell_FlatTop_AdjacentDataCells_ShareTwoRenderCells()
+        {
+            var a = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 0, 0), HexOrientation.FlatTop);
+            var b = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 1, 0), HexOrientation.FlatTop);
+
+            int sharedUp = SharedCount(a.UpCells, b.UpCells);
+            int sharedDown = SharedCount(a.DownCells, b.DownCells);
+
+            Assert.AreEqual(2, sharedUp + sharedDown);
+        }
+
+        // ----- Reverse mapping (round-trip invariant) -------------------------
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_PointyTop_RoundTrips()
+        {
+            var dataCell = new Vector3Int(2, 3, 0);
+            var set = HexDualGridUtils.GetRenderCellsForDataCell(dataCell, HexOrientation.PointyTop);
+
+            foreach (var rc in set.UpCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Up, HexOrientation.PointyTop);
+                Assert.Contains(dataCell, n,
+                    $"up render {rc} should list {dataCell} as one of its data neighbors");
+            }
+            foreach (var rc in set.DownCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Down, HexOrientation.PointyTop);
+                Assert.Contains(dataCell, n);
+            }
+        }
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_FlatTop_RoundTrips()
+        {
+            var dataCell = new Vector3Int(2, 3, 0);
+            var set = HexDualGridUtils.GetRenderCellsForDataCell(dataCell, HexOrientation.FlatTop);
+
+            foreach (var rc in set.UpCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Up, HexOrientation.FlatTop);
+                Assert.Contains(dataCell, n);
+            }
+            foreach (var rc in set.DownCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Down, HexOrientation.FlatTop);
+                Assert.Contains(dataCell, n);
+            }
+        }
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_PointyTop_ReturnsThreeDistinct()
+        {
+            var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                new Vector3Int(0, 0, 0), TriangleKind.Up, HexOrientation.PointyTop);
+            Assert.AreEqual(3, n.Length);
+            Assert.AreEqual(3, new HashSet<Vector3Int>(n).Count);
+        }
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_FlatTop_ReturnsThreeDistinct()
+        {
+            var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                new Vector3Int(0, 0, 0), TriangleKind.Down, HexOrientation.FlatTop);
+            Assert.AreEqual(3, n.Length);
+            Assert.AreEqual(3, new HashSet<Vector3Int>(n).Count);
+        }
+
+        // ----- Render tilemap anchor -----------------------------------------
+
+        [Test]
+        public void GetRenderTilemapAnchor_PointyTop_UpDown_ReflectAcrossHexCenter()
+        {
+            var up = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Up, HexOrientation.PointyTop);
+            var down = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Down, HexOrientation.PointyTop);
+            Assert.AreEqual(1f, up.x + down.x, 0.0001f);
+            Assert.AreEqual(1f, up.y + down.y, 0.0001f);
+        }
+
+        [Test]
+        public void GetRenderTilemapAnchor_FlatTop_UpDown_ReflectAcrossHexCenter()
+        {
+            var up = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Up, HexOrientation.FlatTop);
+            var down = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Down, HexOrientation.FlatTop);
+            Assert.AreEqual(1f, up.x + down.x, 0.0001f);
+            Assert.AreEqual(1f, up.y + down.y, 0.0001f);
+        }
+    }
+}

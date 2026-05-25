@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.2.0] - 2026-05-25
+
+- Added hexagonal dual grid tilemap support alongside the existing rectangular system
+    - New `HexDualGridTilemapModule` drives two render tilemaps (up- and down-triangle vertex lattices) from one data hex tilemap
+    - New `HexDualGridRuleTile` with 8 sprite variants per triangle kind (16 total)
+    - `HexDualGridBrush` palette brush for painting, erasing, box, and flood-fill
+    - `AutoHexDualGridRuleTileProvider` populates a rule tile from a 16-sprite sliced texture
+    - `GameObject > 2D Object > Hex Dual Grid Tilemap` menu items for both pointy-top and flat-top orientations
+    - User guide at `Documentation~/hex-user-guide.md`
+
 ## [2.1.0] - 2026-04-20
 
 - Fixed issue [#8](https://github.com/skner-dev/skner.DualGrid/issues/8): Build error in Unity 2021
