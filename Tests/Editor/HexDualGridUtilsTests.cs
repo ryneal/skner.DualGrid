@@ -177,5 +177,66 @@ namespace skner.DualGrid.Tests
 
             Assert.AreEqual(2, sharedUp + sharedDown);
         }
+
+        // ----- Reverse mapping (round-trip invariant) -------------------------
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_PointyTop_RoundTrips()
+        {
+            var dataCell = new Vector3Int(2, 3, 0);
+            var set = HexDualGridUtils.GetRenderCellsForDataCell(dataCell, HexOrientation.PointyTop);
+
+            foreach (var rc in set.UpCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Up, HexOrientation.PointyTop);
+                Assert.Contains(dataCell, n,
+                    $"up render {rc} should list {dataCell} as one of its data neighbors");
+            }
+            foreach (var rc in set.DownCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Down, HexOrientation.PointyTop);
+                Assert.Contains(dataCell, n);
+            }
+        }
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_FlatTop_RoundTrips()
+        {
+            var dataCell = new Vector3Int(2, 3, 0);
+            var set = HexDualGridUtils.GetRenderCellsForDataCell(dataCell, HexOrientation.FlatTop);
+
+            foreach (var rc in set.UpCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Up, HexOrientation.FlatTop);
+                Assert.Contains(dataCell, n);
+            }
+            foreach (var rc in set.DownCells)
+            {
+                var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                    rc, TriangleKind.Down, HexOrientation.FlatTop);
+                Assert.Contains(dataCell, n);
+            }
+        }
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_PointyTop_ReturnsThreeDistinct()
+        {
+            var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                new Vector3Int(0, 0, 0), TriangleKind.Up, HexOrientation.PointyTop);
+            Assert.AreEqual(3, n.Length);
+            Assert.AreEqual(3, new HashSet<Vector3Int>(n).Count);
+        }
+
+        [Test]
+        public void GetDataNeighborsForRenderCell_FlatTop_ReturnsThreeDistinct()
+        {
+            var n = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                new Vector3Int(0, 0, 0), TriangleKind.Down, HexOrientation.FlatTop);
+            Assert.AreEqual(3, n.Length);
+            Assert.AreEqual(3, new HashSet<Vector3Int>(n).Count);
+        }
     }
 }

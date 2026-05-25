@@ -174,5 +174,63 @@ namespace skner.DualGrid.Utils
             }
             return new RenderCellSet(up, down);
         }
+
+        // ---------------------------------------------------------------------
+        // Reverse mapping: which 3 data cells determine the variant on a given
+        // render cell. Canonical order is lowest-y world position, then
+        // clockwise. Derivation lives next to the forward mapping above.
+        //
+        // Pointy-top:
+        //   Up   (q, r) axial: [(q, r), (q, r+1), (q+1, r)]
+        //   Down (q, r) axial: [(q+1, r-1), (q, r), (q+1, r)]
+        // Flat-top:
+        //   Up   (q, r) axial: [(q, r-1), (q, r), (q+1, r-1)]
+        //   Down (q, r) axial: [(q, r-1), (q-1, r), (q, r)]
+        // ---------------------------------------------------------------------
+
+        public static Vector3Int[] GetDataNeighborsForRenderCell(
+            Vector3Int renderCell, TriangleKind kind, HexOrientation orientation)
+        {
+            if (orientation == HexOrientation.PointyTop)
+            {
+                Vector3Int a = OffsetToAxialPointy(renderCell);
+                Vector3Int[] axial = kind == TriangleKind.Up
+                    ? new[]
+                    {
+                        new Vector3Int(a.x,     a.y,     0),
+                        new Vector3Int(a.x,     a.y + 1, 0),
+                        new Vector3Int(a.x + 1, a.y,     0),
+                    }
+                    : new[]
+                    {
+                        new Vector3Int(a.x + 1, a.y - 1, 0),
+                        new Vector3Int(a.x,     a.y,     0),
+                        new Vector3Int(a.x + 1, a.y,     0),
+                    };
+                var result = new Vector3Int[3];
+                for (int i = 0; i < 3; i++) result[i] = AxialToOffsetPointy(axial[i]);
+                return result;
+            }
+            else
+            {
+                Vector3Int a = OffsetToAxialFlat(renderCell);
+                Vector3Int[] axial = kind == TriangleKind.Up
+                    ? new[]
+                    {
+                        new Vector3Int(a.x,     a.y - 1, 0),
+                        new Vector3Int(a.x,     a.y,     0),
+                        new Vector3Int(a.x + 1, a.y - 1, 0),
+                    }
+                    : new[]
+                    {
+                        new Vector3Int(a.x,     a.y - 1, 0),
+                        new Vector3Int(a.x - 1, a.y,     0),
+                        new Vector3Int(a.x,     a.y,     0),
+                    };
+                var result = new Vector3Int[3];
+                for (int i = 0; i < 3; i++) result[i] = AxialToOffsetFlat(axial[i]);
+                return result;
+            }
+        }
     }
 }
