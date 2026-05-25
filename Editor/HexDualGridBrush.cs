@@ -17,7 +17,7 @@ namespace skner.DualGrid.Editor
     /// pair can come later. Painting/erasing/box/flood-fill all work without
     /// preview.
     /// </remarks>
-    [CustomGridBrush(true, true, true, "Hex Dual Grid Brush")]
+    [CustomGridBrush(false, true, true, "Hex Dual Grid Brush")]
     public class HexDualGridBrush : GridBrush
     {
         public override void BoxFill(GridLayout gridLayout, GameObject brushTarget, BoundsInt bounds)
