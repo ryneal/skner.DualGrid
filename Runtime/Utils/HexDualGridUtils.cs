@@ -120,9 +120,59 @@ namespace skner.DualGrid.Utils
             return new RenderCellSet(up, down);
         }
 
+        // ---------------------------------------------------------------------
+        // Geometry derivation (flat-top)
+        //
+        // Axial convention for flat-top: +q = east, +r = "slanted north" so that
+        // axial (q, r+1) is the due-N neighbor and axial (q+1, r) is the NE
+        // neighbor. Vertices of a flat-top hex are at TR, R, BR, BL, L, TL.
+        // Render-cell assignments (the BR vertex defines the up-render origin,
+        // the BL vertex defines the down-render origin):
+        //   UpRender(q, r)   = up triangle with neighbors (q, r), (q, r-1), (q+1, r-1)
+        //   DownRender(q, r) = down triangle with neighbors (q, r), (q, r-1), (q-1, r)
+        //
+        // Under this convention, a data cell (a, b) contributes to:
+        //   UP   render cells: (a, b), (a, b+1), (a-1, b+1)
+        //   DOWN render cells: (a, b), (a+1, b), (a, b+1)
+        // ---------------------------------------------------------------------
+
+        internal static Vector3Int OffsetToAxialFlat(Vector3Int offset)
+        {
+            int r = offset.y - ((offset.x - (offset.x & 1)) / 2);
+            return new Vector3Int(offset.x, r, 0);
+        }
+
+        internal static Vector3Int AxialToOffsetFlat(Vector3Int axial)
+        {
+            int y = axial.y + ((axial.x - (axial.x & 1)) / 2);
+            return new Vector3Int(axial.x, y, 0);
+        }
+
         private static RenderCellSet GetRenderCellsForDataCell_FlatTop(Vector3Int dataCell)
         {
-            throw new System.NotImplementedException("Flat-top mapping is added in a later task.");
+            Vector3Int a = OffsetToAxialFlat(dataCell);
+
+            Vector3Int[] upAxial =
+            {
+                new Vector3Int(a.x,     a.y,     0),
+                new Vector3Int(a.x,     a.y + 1, 0),
+                new Vector3Int(a.x - 1, a.y + 1, 0),
+            };
+            Vector3Int[] downAxial =
+            {
+                new Vector3Int(a.x,     a.y,     0),
+                new Vector3Int(a.x + 1, a.y,     0),
+                new Vector3Int(a.x,     a.y + 1, 0),
+            };
+
+            var up = new Vector3Int[3];
+            var down = new Vector3Int[3];
+            for (int i = 0; i < 3; i++)
+            {
+                up[i] = AxialToOffsetFlat(upAxial[i]);
+                down[i] = AxialToOffsetFlat(downAxial[i]);
+            }
+            return new RenderCellSet(up, down);
         }
     }
 }

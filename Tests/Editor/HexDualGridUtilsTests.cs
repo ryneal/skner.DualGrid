@@ -117,5 +117,65 @@ namespace skner.DualGrid.Tests
             foreach (var c in right) if (set.Contains(c)) shared++;
             return shared;
         }
+
+        // ----- Flat-top render cell mapping -----------------------------------
+
+        [Test]
+        public void GetRenderCellsForDataCell_FlatTop_EvenColumn()
+        {
+            var result = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 0, 0), HexOrientation.FlatTop);
+
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(0, 1, 0),
+                    new Vector3Int(-1, 0, 0),
+                },
+                result.UpCells);
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(0, 0, 0),
+                    new Vector3Int(1, 0, 0),
+                    new Vector3Int(0, 1, 0),
+                },
+                result.DownCells);
+        }
+
+        [Test]
+        public void GetRenderCellsForDataCell_FlatTop_OddColumn()
+        {
+            var result = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(1, 1, 0), HexOrientation.FlatTop);
+
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(1, 1, 0),
+                    new Vector3Int(1, 2, 0),
+                    new Vector3Int(0, 2, 0),
+                },
+                result.UpCells);
+            CollectionAssert.AreEquivalent(
+                new[] {
+                    new Vector3Int(1, 1, 0),
+                    new Vector3Int(2, 2, 0),
+                    new Vector3Int(1, 2, 0),
+                },
+                result.DownCells);
+        }
+
+        [Test]
+        public void GetRenderCellsForDataCell_FlatTop_AdjacentDataCells_ShareTwoRenderCells()
+        {
+            var a = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 0, 0), HexOrientation.FlatTop);
+            var b = HexDualGridUtils.GetRenderCellsForDataCell(
+                new Vector3Int(0, 1, 0), HexOrientation.FlatTop);
+
+            int sharedUp = SharedCount(a.UpCells, b.UpCells);
+            int sharedDown = SharedCount(a.DownCells, b.DownCells);
+
+            Assert.AreEqual(2, sharedUp + sharedDown);
+        }
     }
 }
