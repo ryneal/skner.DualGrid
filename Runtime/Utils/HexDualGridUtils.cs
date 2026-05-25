@@ -188,6 +188,40 @@ namespace skner.DualGrid.Utils
         //   Down (q, r) axial: [(q, r-1), (q-1, r), (q, r)]
         // ---------------------------------------------------------------------
 
+        // ---------------------------------------------------------------------
+        // Render tilemap anchor offset.
+        //
+        // Each render tilemap is positioned so its cell (0, 0) overlays the
+        // matching triangle centroid of the data grid's vertex lattice. Anchors
+        // are returned in cell-local normalized coordinates (the data hex
+        // occupies [0,1]x[0,1] in tileAnchor space) where (0.5, 0.5) is the hex
+        // center. The up and down centroids are reflections across the hex
+        // center, so up + down = (1, 1) per axis on both orientations.
+        //
+        // Concrete values target the actual NE/SE/BR vertex of the hex (the
+        // vertex chosen as the (0, 0) render cell in each orientation):
+        //   PointyTop Up   = NE vertex (north-east of hex center)
+        //   PointyTop Down = SW vertex (south-west)
+        //   FlatTop   Up   = BR vertex (south-east)
+        //   FlatTop   Down = TL vertex (north-west)
+        // The 0.25 / 0.75 offsets are reasonable defaults; final visual
+        // alignment in Unity may need a per-orientation tweak based on the
+        // actual cellSize aspect ratio chosen for the Grid.
+        // ---------------------------------------------------------------------
+
+        public static Vector3 GetRenderTilemapAnchor(TriangleKind kind, HexOrientation orientation)
+        {
+            if (orientation == HexOrientation.PointyTop)
+            {
+                return kind == TriangleKind.Up
+                    ? new Vector3(0.75f, 0.75f, 0f)
+                    : new Vector3(0.25f, 0.25f, 0f);
+            }
+            return kind == TriangleKind.Up
+                ? new Vector3(0.75f, 0.25f, 0f)
+                : new Vector3(0.25f, 0.75f, 0f);
+        }
+
         public static Vector3Int[] GetDataNeighborsForRenderCell(
             Vector3Int renderCell, TriangleKind kind, HexOrientation orientation)
         {
