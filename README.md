@@ -12,6 +12,7 @@ Here's what this library can do:
 - 🔄 __Automatic Setup__: It takes seconds to setup a dual grid system;
 - 🤝 __Full Unity Integration__: Full integration with Unity's Tilemap and Rule Tiles;
 - 🧩 __Rule Tile Creation__: Streamlined rule tile creation with full rule definition;
+- ⬡ __Hexagonal Dual Grid__: Pointy-top and flat-top hex tilemaps using the same dual-grid technique. See the [hex user guide](Documentation~/hex-user-guide.md).
 
 ## The Dual Grid Tilemap
 
