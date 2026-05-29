@@ -34,15 +34,18 @@ namespace skner.DualGrid.Editor.Menus
 
             var up = new GameObject(HexDualGridTilemapModule.UpRenderTilemapName);
             up.transform.SetParent(data.transform);
-            var upTilemap = up.AddComponent<Tilemap>();
-            upTilemap.tileAnchor = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Up, orientation);
+            up.AddComponent<Tilemap>();
             up.AddComponent<TilemapRenderer>();
 
             var down = new GameObject(HexDualGridTilemapModule.DownRenderTilemapName);
             down.transform.SetParent(data.transform);
-            var downTilemap = down.AddComponent<Tilemap>();
-            downTilemap.tileAnchor = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Down, orientation);
+            down.AddComponent<Tilemap>();
             down.AddComponent<TilemapRenderer>();
+
+            // Position the render tilemaps over the triangle centroids. The module
+            // derives the offsets from the grid geometry, so this works for both
+            // orientations and any cell size.
+            module.AlignRenderTilemaps();
 
             Undo.RegisterCreatedObjectUndo(gridGO, $"Create Hex Dual Grid Tilemap ({orientation})");
             Selection.activeGameObject = gridGO;

@@ -79,6 +79,38 @@ namespace skner.DualGrid.Tests
             Assert.AreEqual(10, afterSecond, "6 + 6 - 2 shared vertices");
         }
 
+        [Test]
+        public void AlignRenderTilemaps_UpCellZero_IsEquidistantFromItsDataNeighbors()
+        {
+            AssertRenderCellZeroIsCentroid(_module.UpRenderTilemap, TriangleKind.Up);
+        }
+
+        [Test]
+        public void AlignRenderTilemaps_DownCellZero_IsEquidistantFromItsDataNeighbors()
+        {
+            AssertRenderCellZeroIsCentroid(_module.DownRenderTilemap, TriangleKind.Down);
+        }
+
+        // The centroid of an equilateral triangle (which a regular hex's dual triangle
+        // is) is the unique point equidistant from all three vertices. Asserting equal
+        // distances proves the render cell sits at the true triangle centroid, without
+        // reusing the centroid formula the alignment code itself uses.
+        private void AssertRenderCellZeroIsCentroid(Tilemap renderMap, TriangleKind kind)
+        {
+            _module.AlignRenderTilemaps();
+
+            var neighbors = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                Vector3Int.zero, kind, HexOrientation.PointyTop);
+
+            Vector3 center = renderMap.GetCellCenterWorld(Vector3Int.zero);
+            float d0 = Vector3.Distance(center, _module.DataTilemap.GetCellCenterWorld(neighbors[0]));
+            float d1 = Vector3.Distance(center, _module.DataTilemap.GetCellCenterWorld(neighbors[1]));
+            float d2 = Vector3.Distance(center, _module.DataTilemap.GetCellCenterWorld(neighbors[2]));
+
+            Assert.AreEqual(d0, d1, 1e-3f, "render cell center should be equidistant from data neighbors 0 and 1");
+            Assert.AreEqual(d1, d2, 1e-3f, "render cell center should be equidistant from data neighbors 1 and 2");
+        }
+
         private int CountRendered()
         {
             int n = 0;

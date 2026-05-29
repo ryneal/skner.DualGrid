@@ -113,12 +113,59 @@ namespace skner.DualGrid
                 Debug.LogError("HexDualGridTilemapModule: rule tile not assigned.", this);
                 return;
             }
+            AlignRenderTilemaps();
             UpRenderTilemap.ClearAllTiles();
             DownRenderTilemap.ClearAllTiles();
             foreach (var p in DataTilemap.cellBounds.allPositionsWithin)
             {
                 if (DataTilemap.HasTile(p)) RefreshRenderTiles(p);
             }
+        }
+
+        /// <summary>
+        /// Positions the two render tilemaps so that their cells overlay the
+        /// up- and down-triangle centroids of the data grid's vertex lattice.
+        /// </summary>
+        /// <remarks>
+        /// Mirrors how the rectangular <see cref="DualGridTilemapModule"/> offsets
+        /// its render tilemap by half a cell via the transform: the offset is a
+        /// constant world vector, applied through <see cref="Transform.localPosition"/>
+        /// rather than the tilemap's <see cref="Tilemap.tileAnchor"/> (which on a hex
+        /// tilemap is in cell-local space and does not yield a clean world offset).
+        /// <para></para>
+        /// The offset is derived from Unity's own geometry rather than hardcoded, so
+        /// it is correct for both orientations and any cell size: render cell (0,0)
+        /// must sit at the centroid of the three data-hex centers it maps to. Because
+        /// that centroid equals the cell's world position plus a constant lattice
+        /// vector, computing it once from cell (0,0) aligns the whole tilemap.
+        /// </remarks>
+        public void AlignRenderTilemaps()
+        {
+            AlignOne(UpRenderTilemap, TriangleKind.Up);
+            AlignOne(DownRenderTilemap, TriangleKind.Down);
+        }
+
+        private void AlignOne(Tilemap renderMap, TriangleKind kind)
+        {
+            if (renderMap == null) return;
+
+            // Match the data tilemap's anchor so a sprite's pivot lands on the render
+            // cell center; the triangle-centroid shift is applied via the transform below.
+            renderMap.tileAnchor = DataTilemap.tileAnchor;
+
+            var neighbors = HexDualGridUtils.GetDataNeighborsForRenderCell(
+                Vector3Int.zero, kind, _orientation);
+
+            // Centroid of the three data-hex centers, in world space. The subtraction
+            // of the cell-(0,0) center cancels any constant anchor term, leaving a pure
+            // lattice delta that is valid for every render cell, not just (0,0).
+            Vector3 centroid = (
+                DataTilemap.GetCellCenterWorld(neighbors[0]) +
+                DataTilemap.GetCellCenterWorld(neighbors[1]) +
+                DataTilemap.GetCellCenterWorld(neighbors[2])) / 3f;
+            Vector3 dataCellZeroCenter = DataTilemap.GetCellCenterWorld(Vector3Int.zero);
+
+            renderMap.transform.localPosition = centroid - dataCellZeroCenter;
         }
 
         public virtual void RefreshRenderTiles(Vector3Int dataCell)

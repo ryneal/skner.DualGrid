@@ -239,24 +239,5 @@ namespace skner.DualGrid.Tests
             Assert.AreEqual(3, new HashSet<Vector3Int>(n).Count);
         }
 
-        // ----- Render tilemap anchor -----------------------------------------
-
-        [Test]
-        public void GetRenderTilemapAnchor_PointyTop_UpDown_ReflectAcrossHexCenter()
-        {
-            var up = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Up, HexOrientation.PointyTop);
-            var down = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Down, HexOrientation.PointyTop);
-            Assert.AreEqual(1f, up.x + down.x, 0.0001f);
-            Assert.AreEqual(1f, up.y + down.y, 0.0001f);
-        }
-
-        [Test]
-        public void GetRenderTilemapAnchor_FlatTop_UpDown_ReflectAcrossHexCenter()
-        {
-            var up = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Up, HexOrientation.FlatTop);
-            var down = HexDualGridUtils.GetRenderTilemapAnchor(TriangleKind.Down, HexOrientation.FlatTop);
-            Assert.AreEqual(1f, up.x + down.x, 0.0001f);
-            Assert.AreEqual(1f, up.y + down.y, 0.0001f);
-        }
     }
 }
